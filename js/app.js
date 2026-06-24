@@ -375,6 +375,59 @@ CommunityHero.app = {
         var loc = document.getElementById('report-location').value || 'Unknown location';
         desc.value = analysis.categoryLabel + ' detected at ' + loc + '. AI severity assessment: ' + sev.label + ' (' + analysis.severity + '/5). Estimated ' + analysis.impactedPeople + ' people affected. ' + analysis.decayPrediction;
       }
+    }).catch(function (error) {
+      console.error("Live AI Analysis failed:", error);
+      
+      // Hide loader overlay momentarily, show error, then fall back
+      overlay.classList.add('ch-hidden');
+      
+      self.showToast('⚠️ Live Gemini API call failed. Check your API key or connection.', 'warning');
+      self.showToast('🤖 Falling back to local Simulation Mode...', 'info');
+      
+      // Run fallback
+      self._runAIAnalysisFallback(file);
+    });
+  },
+
+  _runAIAnalysisFallback: function (file) {
+    var overlay = document.getElementById('ai-analysis-overlay');
+    var results = document.getElementById('ai-results');
+    overlay.classList.remove('ch-hidden');
+    results.style.display = 'none';
+
+    var statusText = document.getElementById('ai-status-text');
+    if (statusText) statusText.textContent = 'Simulation Mode: Analyzing local report assets...';
+
+    var self = this;
+    CommunityHero.ai.analyzeImage(file, true).then(function (analysis) {
+      self._aiResult = analysis;
+      var sevs = CommunityHero.data.severityLevels;
+      var sev = sevs[analysis.severity];
+
+      // Show results
+      results.style.display = 'grid';
+      document.getElementById('ai-category-result').textContent = analysis.categoryEmoji + ' ' + analysis.categoryLabel;
+      document.getElementById('ai-confidence-result').textContent = (analysis.confidence * 100).toFixed(0) + '%';
+      document.getElementById('ai-confidence-result').style.color = 'var(--accent-emerald)';
+      document.getElementById('ai-severity-result').textContent = analysis.severity + '/5 — ' + sev.label;
+      document.getElementById('ai-severity-result').style.color = sev.color;
+      document.getElementById('ai-severity-bar').style.width = (analysis.severity * 20) + '%';
+      document.getElementById('ai-severity-bar').style.background = sev.color;
+      document.getElementById('ai-risk-result').textContent = analysis.riskScore + '/10';
+      document.getElementById('ai-risk-result').style.color = parseFloat(analysis.riskScore) > 7 ? 'var(--accent-coral)' : 'var(--accent-amber)';
+      document.getElementById('ai-impact-result').textContent = analysis.impactedPeople.toLocaleString() + ' people';
+      document.getElementById('ai-dept-result').textContent = analysis.suggestedDept;
+
+      // Auto-generate description if empty
+      var desc = document.getElementById('report-description');
+      if (desc && !desc.value.trim()) {
+        var loc = document.getElementById('report-location').value || 'Unknown location';
+        desc.value = analysis.categoryLabel + ' detected at ' + loc + '. AI severity assessment: ' + sev.label + ' (' + analysis.severity + '/5). Estimated ' + analysis.impactedPeople + ' people affected. ' + analysis.decayPrediction;
+      }
+    }).catch(function (err) {
+      console.error("Simulation fallback failed:", err);
+      overlay.classList.add('ch-hidden');
+      self.showToast('❌ Critical Error: Could not run AI simulation.', 'danger');
     });
   },
 

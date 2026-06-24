@@ -31,9 +31,9 @@ CommunityHero.ai = {
   },
 
   // ---------- Main analysis function ----------
-  analyzeImage: function (file) {
+  analyzeImage: function (file, forceSimulation) {
     var self = this;
-    var apiKey = localStorage.getItem('gemini_api_key');
+    var apiKey = forceSimulation ? null : localStorage.getItem('gemini_api_key');
 
     // Dispatch progress events for UI animations
     var steps = [
@@ -103,7 +103,7 @@ CommunityHero.ai = {
           "}\n" +
           "Note: If the issue is NOT suitable for community self-repair due to safety concerns or scale (e.g. water-leak, drainage, illegal-construction, noise, air-quality, or severity 5 emergency), set \"bounty\" to null. Bounties are only for safe, simple repairs like potholes, waste cleanup, light repairs, and minor road damage. Make the material names and costs highly realistic and tailored to the image.";
 
-        var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
+        var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
         
         var payload = {
           contents: [{
