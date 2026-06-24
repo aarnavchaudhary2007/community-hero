@@ -164,11 +164,11 @@
       <h2 class="ch-section-title" style="margin:0">💰 Bounty Marketplace</h2>
       <select id="bounty-filter-ward" class="ch-select" style="width:auto;min-width:140px" aria-label="Select ward">
         <option value="">All Wards</option>
-        <option value="koramangala">Koramangala</option>
-        <option value="indiranagar">Indiranagar</option>
-        <option value="hsr-layout">HSR Layout</option>
-        <option value="btm-layout">BTM Layout</option>
-        <option value="whitefield">Whitefield</option>
+        <option value="connaught-place">Connaught Place</option>
+        <option value="karol-bagh">Karol Bagh</option>
+        <option value="saket">Saket</option>
+        <option value="dwarka">Dwarka</option>
+        <option value="vasant-kunj">Vasant Kunj</option>
       </select>
     </div>
 
@@ -265,11 +265,38 @@
 
     <div class="ch-form-group">
       <label class="ch-form-label" for="report-location">📍 Location</label>
-      <input type="text" id="report-location" class="ch-input" value="Koramangala, Bangalore">
+      <input type="text" id="report-location" class="ch-input" value="Connaught Place, New Delhi">
     </div>
 
     <div class="ch-form-group">
       <button class="ch-voice-btn" type="button">🎙️ Add Voice Note <span class="ch-text-muted" style="margin-left:auto;font-size:0.75rem">Coming soon</span></button>
+    </div>
+
+    <!-- AI Automation & Formal Application Review Card -->
+    <div id="report-ai-automation-card" class="ch-card ch-mb-md ch-hidden" style="border-left: 3px solid var(--accent-purple); padding: 16px;">
+      <div class="ch-ai-title" style="margin-top:0; font-size:1rem; display:flex; align-items:center; gap:8px;">
+        🤖 Escalation Agent: Auto-Generated Formal Application
+      </div>
+      <p class="ch-text-xs ch-text-secondary ch-mb-sm" style="margin-bottom: 8px;">
+        The Escalation Agent has drafted a formal municipal application and suggested the concerned authorities to tag.
+      </p>
+      
+      <!-- Suggested Tags -->
+      <div class="ch-mb-sm">
+        <span class="ch-text-xs" style="font-weight:600; color:var(--accent-teal);">Concerned Authorities:</span>
+        <div id="report-suggested-tags" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;"></div>
+      </div>
+
+      <!-- Formal Letter Preview -->
+      <div class="ch-form-group" style="margin-bottom:12px;">
+        <label class="ch-form-label" style="font-size:0.75rem;">Application Draft Preview</label>
+        <pre id="report-formal-letter-preview" style="background:var(--bg-tertiary); padding:12px; border-radius:var(--radius-sm); font-size:0.7rem; color:var(--text-secondary); overflow-x:auto; white-space:pre-wrap; line-height:1.4; border:1px solid var(--border-color); max-height:150px; overflow-y:auto; font-family:monospace;"></pre>
+      </div>
+
+      <div class="ch-flex-between">
+        <span class="ch-text-xs ch-text-muted">Status: Draft ready for submission</span>
+        <button id="copy-report-letter-btn" class="ch-btn ch-btn-outline ch-btn-sm" style="font-size:0.75rem; padding:4px 10px;" type="button">📋 Copy Draft</button>
+      </div>
     </div>
 
     <button id="report-submit-btn" class="ch-btn ch-btn-primary ch-btn-full" type="button">🚀 Submit Report</button>
@@ -319,11 +346,11 @@
       <h2 class="ch-section-title" style="margin:0">📊 Impact Dashboard</h2>
       <select id="ward-selector" class="ch-select" style="width:auto;min-width:140px" aria-label="Select ward">
         <option value="">All Wards</option>
-        <option value="koramangala">Koramangala</option>
-        <option value="indiranagar">Indiranagar</option>
-        <option value="hsr-layout">HSR Layout</option>
-        <option value="btm-layout">BTM Layout</option>
-        <option value="whitefield">Whitefield</option>
+        <option value="connaught-place">Connaught Place</option>
+        <option value="karol-bagh">Karol Bagh</option>
+        <option value="saket">Saket</option>
+        <option value="dwarka">Dwarka</option>
+        <option value="vasant-kunj">Vasant Kunj</option>
       </select>
     </div>
 
@@ -380,7 +407,7 @@
     <div class="ch-profile-header">
       <div class="ch-profile-avatar">👩‍💻</div>
       <div class="ch-profile-name" id="user-name">Aarna Sharma</div>
-      <div class="ch-profile-location">📍 Koramangala, Bangalore</div>
+      <div class="ch-profile-location">📍 Connaught Place, New Delhi</div>
 
       <div style="margin:20px auto;width:fit-content">
         <div class="ch-trust-score" id="user-trust-score" style="--score:84.7">

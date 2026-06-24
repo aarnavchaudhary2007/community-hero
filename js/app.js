@@ -320,6 +320,19 @@ CommunityHero.app = {
       submitBtn.addEventListener('click', function () { self._submitReport(); });
     }
 
+    // Copy button for the auto-generated formal municipal application
+    var copyBtn = document.getElementById('copy-report-letter-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        var preview = document.getElementById('report-formal-letter-preview');
+        if (preview && preview.textContent) {
+          navigator.clipboard.writeText(preview.textContent).then(function () {
+            self.showToast('📋 Formal application copied to clipboard!', 'success');
+          });
+        }
+      });
+    }
+
     // Listen for AI events
     document.addEventListener('ai:started', function (e) {
       document.getElementById('ai-status-text').textContent = e.detail.message;
@@ -369,16 +382,50 @@ CommunityHero.app = {
       document.getElementById('ai-impact-result').textContent = analysis.impactedPeople.toLocaleString() + ' people';
       document.getElementById('ai-dept-result').textContent = analysis.suggestedDept;
 
-      // Auto-generate description if empty
+      // Agentic Automation: Auto-generate description in textarea
       var desc = document.getElementById('report-description');
-      if (desc && !desc.value.trim()) {
-        var loc = document.getElementById('report-location').value || 'Unknown location';
-        desc.value = analysis.categoryLabel + ' detected at ' + loc + '. AI severity assessment: ' + sev.label + ' (' + analysis.severity + '/5). Estimated ' + analysis.impactedPeople + ' people affected. ' + analysis.decayPrediction;
+      var loc = document.getElementById('report-location').value || 'Connaught Place, New Delhi';
+      
+      var autoDesc = analysis.categoryLabel + ' detected near ' + loc.split(',')[0] + '. ' +
+        'Triage Agent assessed severity at ' + analysis.severity + '/5 (' + sev.label + ') with ' + (analysis.confidence * 100).toFixed(0) + '% confidence. ' +
+        'Impacted population estimated at ' + analysis.impactedPeople.toLocaleString('en-IN') + ' citizens. ' +
+        'Decay Forecast: ' + analysis.decayPrediction;
+      
+      if (desc) {
+        desc.value = autoDesc;
       }
+
+      // Agentic Automation: Suggest Delhi authorities to tag
+      var tagsContainer = document.getElementById('report-suggested-tags');
+      if (tagsContainer) {
+        tagsContainer.innerHTML = '<span class="ch-tag ch-tag-authority">🏢 ' + analysis.suggestedDept + '</span>' +
+          '<span class="ch-tag ch-tag-authority">🚨 Delhi Civic Command Center</span>' +
+          (analysis.severity >= 4 ? '<span class="ch-tag ch-tag-authority" style="color:var(--accent-coral);background:rgba(220,38,38,0.1);border-color:rgba(220,38,38,0.2)">🚨 Zonal Commissioner</span>' : '');
+      }
+
+      // Agentic Automation: Draft formal municipal complaint letter via Escalation Agent
+      var letterDraft = '';
+      if (CommunityHero.crisis && typeof CommunityHero.crisis.generateComplaintDraft === 'function') {
+        letterDraft = CommunityHero.crisis.generateComplaintDraft(analysis, loc, autoDesc);
+      } else {
+        letterDraft = 'Failed to generate Delhi municipal application draft.';
+      }
+
+      var letterPreview = document.getElementById('report-formal-letter-preview');
+      if (letterPreview) {
+        letterPreview.textContent = letterDraft;
+      }
+
+      // Show the Automation Card
+      var automationCard = document.getElementById('report-ai-automation-card');
+      if (automationCard) {
+        automationCard.classList.remove('ch-hidden');
+      }
+
     }).catch(function (error) {
       console.error("Live AI Analysis failed:", error);
       
-      // Hide loader overlay momentarily, show error, then fall back
+      // Hide loader overlay, show error, then fall back
       overlay.classList.add('ch-hidden');
       
       self.showToast('⚠️ Live Gemini API call failed. Check your API key or connection.', 'warning');
@@ -418,12 +465,46 @@ CommunityHero.app = {
       document.getElementById('ai-impact-result').textContent = analysis.impactedPeople.toLocaleString() + ' people';
       document.getElementById('ai-dept-result').textContent = analysis.suggestedDept;
 
-      // Auto-generate description if empty
+      // Agentic Automation: Auto-generate description in textarea
       var desc = document.getElementById('report-description');
-      if (desc && !desc.value.trim()) {
-        var loc = document.getElementById('report-location').value || 'Unknown location';
-        desc.value = analysis.categoryLabel + ' detected at ' + loc + '. AI severity assessment: ' + sev.label + ' (' + analysis.severity + '/5). Estimated ' + analysis.impactedPeople + ' people affected. ' + analysis.decayPrediction;
+      var loc = document.getElementById('report-location').value || 'Connaught Place, New Delhi';
+      
+      var autoDesc = analysis.categoryLabel + ' detected near ' + loc.split(',')[0] + '. ' +
+        'Triage Agent assessed severity at ' + analysis.severity + '/5 (' + sev.label + ') with ' + (analysis.confidence * 100).toFixed(0) + '% confidence. ' +
+        'Impacted population estimated at ' + analysis.impactedPeople.toLocaleString('en-IN') + ' citizens. ' +
+        'Decay Forecast: ' + analysis.decayPrediction;
+      
+      if (desc) {
+        desc.value = autoDesc;
       }
+
+      // Agentic Automation: Suggest Delhi authorities to tag
+      var tagsContainer = document.getElementById('report-suggested-tags');
+      if (tagsContainer) {
+        tagsContainer.innerHTML = '<span class="ch-tag ch-tag-authority">🏢 ' + analysis.suggestedDept + '</span>' +
+          '<span class="ch-tag ch-tag-authority">🚨 Delhi Civic Command Center</span>' +
+          (analysis.severity >= 4 ? '<span class="ch-tag ch-tag-authority" style="color:var(--accent-coral);background:rgba(220,38,38,0.1);border-color:rgba(220,38,38,0.2)">🚨 Zonal Commissioner</span>' : '');
+      }
+
+      // Agentic Automation: Draft formal municipal complaint letter via Escalation Agent
+      var letterDraft = '';
+      if (CommunityHero.crisis && typeof CommunityHero.crisis.generateComplaintDraft === 'function') {
+        letterDraft = CommunityHero.crisis.generateComplaintDraft(analysis, loc, autoDesc);
+      } else {
+        letterDraft = 'Failed to generate Delhi municipal application draft.';
+      }
+
+      var letterPreview = document.getElementById('report-formal-letter-preview');
+      if (letterPreview) {
+        letterPreview.textContent = letterDraft;
+      }
+
+      // Show the Automation Card
+      var automationCard = document.getElementById('report-ai-automation-card');
+      if (automationCard) {
+        automationCard.classList.remove('ch-hidden');
+      }
+
     }).catch(function (err) {
       console.error("Simulation fallback failed:", err);
       overlay.classList.add('ch-hidden');
@@ -438,8 +519,21 @@ CommunityHero.app = {
     }
 
     var analysis = this._aiResult;
-    var location = document.getElementById('report-location').value || 'Koramangala, Bangalore';
+    var location = document.getElementById('report-location').value || 'Connaught Place, New Delhi';
     var description = document.getElementById('report-description').value;
+
+    // Dynamically map location to nearest Delhi ward
+    var wardId = 'connaught-place'; // default
+    var locLower = location.toLowerCase();
+    CommunityHero.data.wards.forEach(function (w) {
+      if (locLower.indexOf(w.name.toLowerCase()) !== -1) {
+        wardId = w.id;
+      }
+    });
+
+    var ward = CommunityHero.data.wards.find(function (w) { return w.id === wardId; });
+    var lat = ward ? ward.lat + (Math.random() - 0.5) * 0.015 : 28.6139 + (Math.random() - 0.5) * 0.03;
+    var lng = ward ? ward.lng + (Math.random() - 0.5) * 0.015 : 77.2090 + (Math.random() - 0.5) * 0.03;
 
     // Create new issue
     var newIssue = {
@@ -449,7 +543,7 @@ CommunityHero.app = {
       category: analysis.category,
       severity: analysis.severity,
       status: 'open',
-      location: { lat: 12.935 + (Math.random() - 0.5) * 0.02, lng: 77.624 + (Math.random() - 0.5) * 0.02, address: location, ward: 'koramangala' },
+      location: { lat: lat, lng: lng, address: location, ward: wardId },
       reportedBy: { id: 'USR-001', name: 'Aarna Sharma', avatar: '👩‍💻', trustScore: 847 },
       reportedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -510,6 +604,18 @@ CommunityHero.app = {
       }, 500);
     }
 
+    // ====== NEW: Dynamic Map Integration ======
+    if (CommunityHero.map && typeof CommunityHero.map.addNewIssueMarker === 'function') {
+      CommunityHero.map.addNewIssueMarker(newIssue);
+      
+      // Fly to the new issue on the map!
+      var selfMap = this;
+      this.switchScreen('screen-map');
+      setTimeout(function () {
+        CommunityHero.map.flyToIssue(newIssue.id);
+      }, 300);
+    }
+
     // Reset form
     this._aiResult = null;
     document.getElementById('report-image-upload').classList.remove('ch-hidden');
@@ -518,10 +624,15 @@ CommunityHero.app = {
     document.getElementById('ai-analysis-overlay').classList.add('ch-hidden');
     document.getElementById('report-description').value = '';
     document.getElementById('report-file-input').value = '';
+    
+    var automationCard = document.getElementById('report-ai-automation-card');
+    if (automationCard) {
+      automationCard.classList.add('ch-hidden');
+    }
 
     // XP
     var xpResult = CommunityHero.gamification.addXP('USR-001', 'report-issue');
-    this.showToast('🎉 Issue reported! +50 XP earned!', 'success');
+    this.showToast('🚀 Report submitted! Delhi authorities tagged and formal complaint drafted.', 'success');
     if (xpResult && xpResult.leveledUp) {
       var self = this;
       setTimeout(function () { self.showToast('🎉 LEVEL UP! Level ' + xpResult.newLevel + '!', 'info'); }, 1500);
@@ -530,7 +641,6 @@ CommunityHero.app = {
     // Refresh everything
     this.renderHome();
     this.renderBounties();
-    this.switchScreen('screen-home');
   },
 
   // ==================== FILTERS ====================

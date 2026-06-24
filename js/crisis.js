@@ -379,6 +379,81 @@ CommunityHero.crisis = (function () {
       return complaint;
     },
 
+    /**
+     * Build a plain-text formal municipal complaint draft from the raw analysis,
+     * location, and description before the report is officially submitted.
+     * Specially tailored for Delhi municipal authorities (MCD, DJB, PWD, DPCC, etc.).
+     *
+     * @param {Object} analysis — The raw AI analysis object.
+     * @param {string} location — The input location address.
+     * @param {string} description — The input description.
+     * @returns {string} The formatted complaint draft letter.
+     */
+    generateComplaintDraft: function (analysis, location, description) {
+      var cats = CommunityHero.data.categories || {};
+      var cat  = cats[analysis.category] || cats['other'] || { emoji: '📋', label: analysis.category };
+      var now  = new Date();
+      var refNo = 'CH-DLH-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+
+      var divider = '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550' +
+                    '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550' +
+                    '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550' +
+                    '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550' +
+                    '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550' +
+                    '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550' +
+                    '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550' +
+                    '\u2550\u2550';    // ══════…
+
+      var complaint = [
+        divider,
+        '    FORMAL MUNICIPAL COMPLAINT \u2014 DRAFT APPLICATION',
+        '    Community Hero Delhi AI Portal \u2014 Autonomous Escalation',
+        divider,
+        '',
+        'Date              : ' + now.toLocaleDateString('en-IN', {
+          day: 'numeric', month: 'long', year: 'numeric'
+        }),
+        'Reference No.     : ' + refNo + '-DRAFT',
+        'Priority          : ' + (analysis.severity >= 4 ? '*** URGENT ***' : 'Standard'),
+        'Target Authority  : ' + (cat.dept || 'MCD / Delhi Civic Authorities'),
+        '',
+        'To,',
+        'The Concerned Zonal Officer / Chief Engineer,',
+        'Delhi Civic Infrastructure Authorities (MCD / DJB / PWD / DPCC),',
+        'National Capital Territory of Delhi (NCT), India.',
+        '',
+        'Subject: Urgent grievance regarding ' + cat.label.toLowerCase() + ' at ' + location.split(',')[0],
+        '',
+        'Respected Sir/Madam,',
+        '',
+        'This is a formal grievance filing regarding a public infrastructure issue spotted in Delhi. The details are as follows:',
+        '',
+        '--- INFRASTRUCTURE ISSUE DETAILS ---',
+        'Category          : ' + cat.emoji + ' ' + cat.label,
+        'Severity Level    : ' + analysis.severity + '/5',
+        'Risk Score        : ' + (analysis.riskScore || 'N/A') + '/10',
+        'Location Address  : ' + location,
+        'GPS Coordinates   : (Coordinates will be locked upon filing)',
+        '',
+        '--- DESCRIPTION of DISRUPTION ---',
+        description || 'An infrastructure breakdown has been reported at the location above. Image evidence has been verified by the Triage Agent.',
+        '',
+        '--- AUTONOMOUS AGENT FORENSICS ---',
+        'Estimated Size    : ' + (analysis.estimatedSize || 'Not specified'),
+        'Citizens Impacted : ' + (analysis.impactedPeople ? analysis.impactedPeople.toLocaleString('en-IN') : 'Significant local population'),
+        'Decay Forecast    : ' + (analysis.decayPrediction || 'Will deteriorate if unaddressed'),
+        'Suggested Routing : ' + (cat.dept || 'Delhi Civic Department'),
+        '',
+        'As per the platform\'s predictive intelligence, leaving this issue unaddressed poses an active risk of ' + (analysis.severity >= 4 ? 'accidents and safety hazards' : 'further deterioration') + ' for the local neighborhood. We request immediate inspection and resolution by the concerned department.',
+        '',
+        'Respectfully submitted,',
+        'Concerned Citizens of Delhi NCR & Delhi Community Hero Platform.',
+        divider
+      ].join('\n');
+
+      return complaint;
+    },
+
     // ====================================================================
     //  6. CRISIS DASHBOARD STATS
     // ====================================================================

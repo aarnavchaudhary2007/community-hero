@@ -1,5 +1,5 @@
 // ============================================================
-// Community Hero — Leaflet Map Module
+// Community Hero — Leaflet Map Module (Delhi Edition)
 // ============================================================
 window.CommunityHero = window.CommunityHero || {};
 
@@ -23,18 +23,19 @@ CommunityHero.map = {
       return;
     }
 
+    // Centered on Delhi/NCR with a zoom level suitable for the city
     this.map = L.map('map-container', {
-      center: [12.9352, 77.6245],
-      zoom: 13,
+      center: [28.6139, 77.2090],
+      zoom: 11,
       zoomControl: false
     });
 
     // Zoom control top-right
     L.control.zoom({ position: 'topright' }).addTo(this.map);
 
-    // Tile layer (standard OSM — CSS filter applied in styles.css darkens it)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    // Premium CartoDB Dark Matter tile layer for high-fidelity dark styling
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 19
     }).addTo(this.map);
 
@@ -48,7 +49,7 @@ CommunityHero.map = {
     this.updateIssueCount();
     this._initialized = true;
 
-    // Inject marker styles
+    // Inject custom CSS styles (including hover tooltips)
     this._injectStyles();
   },
 
@@ -70,11 +71,15 @@ CommunityHero.map = {
       '.ch-map-popup p { margin:2px 0;font-size:12px;color:#9ca3af; }',
       '.ch-map-popup button { margin-top:8px;padding:6px 14px;background:linear-gradient(135deg,#06d6a0,#118ab2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;width:100%; }',
       '.ch-map-popup button:hover { opacity:0.9; }',
-      '.ch-ward-label { background:transparent !important;border:none !important;color:#9ca3af;font-size:11px;font-weight:600;font-family:"Inter",sans-serif;text-transform:uppercase;letter-spacing:1px;text-shadow:0 1px 3px rgba(0,0,0,0.8);white-space:nowrap; }',
+      '.ch-ward-label { background:transparent !important;border:none !important;color:#9ca3af;font-size:10px;font-weight:700;font-family:"Inter",sans-serif;text-transform:uppercase;letter-spacing:1.5px;text-shadow:0 1px 4px rgba(0,0,0,0.9);white-space:nowrap; opacity:0.75; }',
       // Dark popup styling
-      '.leaflet-popup-content-wrapper { background:#1f2937 !important;border:1px solid rgba(255,255,255,0.1);border-radius:12px !important;box-shadow:0 8px 32px rgba(0,0,0,0.4) !important; }',
-      '.leaflet-popup-tip { background:#1f2937 !important; }',
-      '.leaflet-popup-close-button { color:#9ca3af !important; }'
+      '.leaflet-popup-content-wrapper { background:#1e293b !important;border:1px solid rgba(255,255,255,0.1);border-radius:12px !important;box-shadow:0 8px 32px rgba(0,0,0,0.5) !important; }',
+      '.leaflet-popup-tip { background:#1e293b !important; }',
+      '.leaflet-popup-close-button { color:#9ca3af !important; }',
+      // Premium hover tooltips styling
+      '.ch-map-tooltip { background: rgba(30, 41, 59, 0.95) !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; border-radius: 8px !important; box-shadow: 0 4px 16px rgba(0,0,0,0.6) !important; color: #f3f4f6 !important; font-family: "Inter", sans-serif !important; padding: 6px 10px !important; pointer-events: none !important; font-size: 11px !important; }',
+      '.ch-map-tooltip::before { border-top-color: rgba(30, 41, 59, 0.95) !important; }',
+      '.ch-map-tooltip-content strong { font-size: 12px; font-weight: 600; display: inline-block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }'
     ].join('\n');
     var style = document.createElement('style');
     style.id = 'ch-map-styles';
@@ -86,30 +91,56 @@ CommunityHero.map = {
   addMarkers: function () {
     var self = this;
     var issues = CommunityHero.data.issues;
-    var cats = CommunityHero.data.categories;
-
     issues.forEach(function (issue) {
-      var cat = cats[issue.category] || cats['other'];
-      var icon = L.divIcon({
-        className: 'ch-map-marker',
-        html: '<div class="ch-marker ch-marker-severity-' + issue.severity + '">' + cat.emoji + '</div>',
-        iconSize: [36, 36],
-        iconAnchor: [18, 18]
-      });
-
-      var marker = L.marker([issue.location.lat, issue.location.lng], { icon: icon });
-      marker.bindPopup(
-        '<div class="ch-map-popup">' +
-          '<strong>' + cat.emoji + ' ' + issue.title + '</strong>' +
-          '<p>📍 ' + issue.location.address + '</p>' +
-          '<p>Severity: ' + issue.severity + '/5 | ' + issue.status.charAt(0).toUpperCase() + issue.status.slice(1) + '</p>' +
-          '<button onclick="CommunityHero.app.showIssueDetail(\'' + issue.id + '\')">View Details →</button>' +
-        '</div>'
-      );
-      marker._issueData = issue; // stash for filtering
-      marker.addTo(self.markerLayer);
-      self.markers[issue.id] = marker;
+      self.addNewIssueMarker(issue);
     });
+  },
+
+  // ---------- Add single new marker dynamically ----------
+  addNewIssueMarker: function (issue) {
+    if (this.markers[issue.id]) return; // Avoid duplicates
+    
+    var cats = CommunityHero.data.categories;
+    var cat = cats[issue.category] || cats['other'];
+
+    var icon = L.divIcon({
+      className: 'ch-map-marker',
+      html: '<div class="ch-marker ch-marker-severity-' + issue.severity + '">' + cat.emoji + '</div>',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
+    });
+
+    var marker = L.marker([issue.location.lat, issue.location.lng], { icon: icon });
+    
+    // Bind Popup (for click)
+    marker.bindPopup(
+      '<div class="ch-map-popup">' +
+        '<strong>' + cat.emoji + ' ' + issue.title + '</strong>' +
+        '<p>📍 ' + issue.location.address + '</p>' +
+        '<p>Severity: ' + issue.severity + '/5 | Status: ' + issue.status.toUpperCase() + '</p>' +
+        '<button onclick="CommunityHero.app.showIssueDetail(\'' + issue.id + '\')">View Details →</button>' +
+      '</div>'
+    );
+
+    // Bind Tooltip (for hover)
+    marker.bindTooltip(
+      '<div class="ch-map-tooltip-content">' +
+        '<span style="font-size:1.1rem;margin-right:6px;vertical-align:middle;">' + cat.emoji + '</span>' +
+        '<strong>' + issue.title + '</strong>' +
+        '<div style="margin-top:4px;font-size:10px;color:#cbd5e1;">Severity: <span style="color:' + CommunityHero.data.severityLevels[issue.severity].color + ';font-weight:bold;">' + issue.severity + '/5</span> | ' + issue.location.address.split(',')[0] + '</div>' +
+      '</div>',
+      {
+        permanent: false,
+        direction: 'top',
+        className: 'ch-map-tooltip',
+        offset: [0, -10]
+      }
+    );
+
+    marker._issueData = issue; // stash for filtering
+    marker.addTo(this.markerLayer);
+    this.markers[issue.id] = marker;
+    this.updateIssueCount();
   },
 
   // ---------- Remove marker ----------
@@ -198,8 +229,8 @@ CommunityHero.map = {
       var label = L.divIcon({
         className: 'ch-ward-label',
         html: w.name,
-        iconSize: [100, 20],
-        iconAnchor: [50, 10]
+        iconSize: [120, 20],
+        iconAnchor: [60, 10]
       });
       L.marker([w.lat, w.lng], { icon: label, interactive: false }).addTo(self.labelLayer);
     });
@@ -210,7 +241,7 @@ CommunityHero.map = {
     var marker = this.markers[issueId];
     if (!marker) return;
     var issue = marker._issueData;
-    this.map.flyTo([issue.location.lat, issue.location.lng], 16, { duration: 1 });
-    setTimeout(function () { marker.openPopup(); }, 1100);
+    this.map.flyTo([issue.location.lat, issue.location.lng], 16, { duration: 1.2 });
+    setTimeout(function () { marker.openPopup(); }, 1300);
   }
 };

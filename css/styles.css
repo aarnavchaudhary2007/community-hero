@@ -896,3 +896,28 @@ body.ch-crisis-active .ch-crisis-banner { display: block !important; }
   .ch-crisis-banner-inner { font-size: 0.7rem; padding: 8px 36px 8px 12px; }
 }
 
+/* ============================================================
+   DELHI COMPLAINT & AUTHORITY TAG STYLES
+   ============================================================ */
+.ch-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.ch-tag-authority {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.2);
+  color: #a78bfa; /* Lighter purple for visibility in dark mode */
+}
+.ch-tag-authority:hover {
+  background: rgba(139, 92, 246, 0.18);
+  transform: translateY(-1px);
+}
+
