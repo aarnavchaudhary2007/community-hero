@@ -172,7 +172,7 @@ CommunityHero.ai = {
       reader.onerror = function (err) { reject(err); };
       reader.readAsDataURL(file);
     });
-  }
+  },
 
   // ---------- Size estimation ----------
   _generateSize: function (category) {
