@@ -1,0 +1,5 @@
+node_modules/
+temp_context.txt
+dist/
+.DS_Store
+*.local
