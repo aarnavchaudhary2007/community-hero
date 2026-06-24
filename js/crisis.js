@@ -169,22 +169,34 @@ CommunityHero.crisis = (function () {
 
       var totalPeople = _sumImpacted(_crisisIssues);
 
-      // Build human-readable summary
-      var text = '\uD83D\uDEA8 CRISIS ALERT: ';           // 🚨
+      // Build detailed scrolling news tape
+      var tapeText = '\uD83D\uDEA8 CRISIS ALERT: ';           // 🚨
 
       if (sev5.length > 0) {
-        text += sev5.length + ' EMERGENCY';
+        tapeText += sev5.length + ' EMERGENCY';
       }
       if (sev4.length > 0) {
-        text += (sev5.length > 0 ? ' + ' : '') + sev4.length + ' Critical';
+        tapeText += (sev5.length > 0 ? ' + ' : '') + sev4.length + ' Critical';
       }
 
-      text += ' issue' + (_crisisIssues.length > 1 ? 's' : '') + ' detected';
-      text += ' — ' + totalPeople.toLocaleString() + ' citizens at risk';
+      tapeText += ' issue' + (_crisisIssues.length > 1 ? 's' : '') + ' detected (' + totalPeople.toLocaleString('en-IN') + ' citizens at risk) • ';
+
+      // Append specific issue details for the scrolling marquee
+      var issueDetails = _crisisIssues.map(function (issue) {
+        var categoryEmoji = (CommunityHero.data && CommunityHero.data.categories[issue.category])
+          ? CommunityHero.data.categories[issue.category].emoji
+          : '⚠️';
+        var wardName = (CommunityHero.data && CommunityHero.data.wards.find(function (w) { return w.id === issue.location.ward; }))
+          ? CommunityHero.data.wards.find(function (w) { return w.id === issue.location.ward; }).name
+          : 'Delhi';
+        return categoryEmoji + ' ' + issue.title + ' [' + wardName + ' | Severity ' + issue.severity + '/5]';
+      });
+
+      tapeText += issueDetails.join(' • ');
 
       var textEl = banner.querySelector('.crisis-banner-text');
       if (textEl) {
-        textEl.textContent = text;
+        textEl.textContent = tapeText;
       }
     },
 

@@ -463,10 +463,42 @@ CommunityHero.data = {
       { ward:'Vasant Kunj',     reported:41, resolved:28 }
     ],
     predictions: [
-      { area:'Vasant Kunj',  prediction:'Expect 3× waterlogging reports this week due to monsoon drainage blockage', severity:'high',   category:'drainage' },
-      { area:'Connaught Place', prediction:'Road near CP Inner Circle Block B deteriorating — predicted pothole in 2 weeks',  severity:'medium', category:'pothole' },
-      { area:'Karol Bagh',   prediction:'Waste accumulation spike expected near Ghaffar Market area this weekend',   severity:'medium', category:'waste' },
-      { area:'Dwarka',       prediction:'4 streetlights in Sector 6 near school nearing end-of-life (installed 2019)',   severity:'low',    category:'streetlight' }
+      {
+        area: 'Vasant Kunj',
+        prediction: 'Expect 3× waterlogging reports this week due to monsoon drainage blockage near Sector C main road.',
+        severity: 'high',
+        category: 'drainage',
+        timeframe: 'Next 72 Hours',
+        confidence: 88,
+        mitigation: 'Deploy MCD drainage suction trucks to clean Sector C storm sewers before Thursday rain.'
+      },
+      {
+        area: 'Connaught Place',
+        prediction: 'Road surface near CP Inner Circle Block B deteriorating — high-impact pothole predicted to form under heavy traffic.',
+        severity: 'medium',
+        category: 'pothole',
+        timeframe: 'Within 10 Days',
+        confidence: 76,
+        mitigation: 'PWD road crew to apply preventive micro-resurfacing patch to Block B asphalt seam.'
+      },
+      {
+        area: 'Karol Bagh',
+        prediction: 'Solid waste accumulation spike expected near Ghaffar Market main entrance due to weekend festival footfall.',
+        severity: 'medium',
+        category: 'waste',
+        timeframe: 'Next 48 Hours',
+        confidence: 82,
+        mitigation: 'MCD Solid Waste Management to deploy 3 extra mobile garbage bins and schedule an extra Sunday pickup.'
+      },
+      {
+        area: 'Dwarka',
+        prediction: '4 critical streetlights on Sector 6 School Avenue road showing filament decay — predicted complete dark-out.',
+        severity: 'low',
+        category: 'streetlight',
+        timeframe: 'Within 7 Days',
+        confidence: 90,
+        mitigation: 'BSES Electrical division to pre-emptively replace lamp fixtures with new 30W LED bulbs.'
+      }
     ],
     totalSaved: '18.6L'
   }

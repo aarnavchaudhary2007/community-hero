@@ -17,7 +17,9 @@
   <div id="crisis-banner" class="ch-crisis-banner ch-hidden" role="alert">
     <div class="ch-crisis-banner-inner">
       <div class="ch-crisis-pulse"></div>
-      <span class="crisis-banner-text">🚨 CRISIS ALERT: Scanning for emergencies...</span>
+      <div class="ch-crisis-ticker-container">
+        <div class="ch-crisis-ticker-track crisis-banner-text">🚨 CRISIS ALERT: Scanning for emergencies...</div>
+      </div>
       <button class="ch-crisis-dismiss" onclick="document.getElementById('crisis-banner').classList.add('ch-hidden')" title="Dismiss" aria-label="Dismiss crisis alert">✕</button>
     </div>
   </div>
@@ -357,25 +359,28 @@
     <div class="ch-stat-grid ch-mb-lg">
       <div class="ch-stat-card">
         <div class="ch-stat-icon">📋</div>
-        <div class="ch-stat-number">48</div>
+        <div class="ch-stat-number" id="dash-stat-total">0</div>
         <div class="ch-stat-label">Issues This Month</div>
       </div>
       <div class="ch-stat-card">
         <div class="ch-stat-icon">📈</div>
-        <div class="ch-stat-number">73%</div>
+        <div class="ch-stat-number" id="dash-stat-rate">0%</div>
         <div class="ch-stat-label">Resolution Rate</div>
       </div>
       <div class="ch-stat-card">
         <div class="ch-stat-icon">⏱️</div>
-        <div class="ch-stat-number">4.2d</div>
+        <div class="ch-stat-number" id="dash-stat-time">0d</div>
         <div class="ch-stat-label">Avg Resolution</div>
       </div>
       <div class="ch-stat-card">
         <div class="ch-stat-icon">🔮</div>
-        <div class="ch-stat-number">23</div>
+        <div class="ch-stat-number" id="dash-stat-predicted">0</div>
         <div class="ch-stat-label">Predicted Next Wk</div>
       </div>
     </div>
+
+    <!-- AI Ward Health Audit Scorecard -->
+    <div id="dashboard-health-audit" class="ch-mb-lg"></div>
 
     <div class="ch-grid-2 ch-mb-lg">
       <div class="ch-chart-container">

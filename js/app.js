@@ -34,6 +34,12 @@ CommunityHero.app = {
     // Init charts (delayed to ensure Chart.js loaded)
     setTimeout(function () { self.initDashboardCharts(); }, 500);
 
+    // Setup insights ward listener and populate initial dashboard stats
+    setTimeout(function () {
+      self.setupDashboardListener();
+      self.updateDashboard('');
+    }, 600);
+
     // Animate XP bar on profile
     setTimeout(function () {
       var xpBar = document.getElementById('user-xp-bar');
@@ -641,6 +647,11 @@ CommunityHero.app = {
     // Refresh everything
     this.renderHome();
     this.renderBounties();
+    
+    // Refresh real-time dashboard instantly
+    var selector = document.getElementById('ward-selector');
+    var currentWard = selector ? selector.value : '';
+    this.updateDashboard(currentWard);
   },
 
   // ==================== FILTERS ====================
@@ -743,17 +754,361 @@ CommunityHero.app = {
     if (!container) return;
     var predictions = CommunityHero.data.analytics.predictions;
     var cats = CommunityHero.data.categories;
-    container.innerHTML = predictions.map(function (p) {
-      var cat = cats[p.category] || cats['other'];
-      return '<div class="ch-prediction-item">' +
-        '<div class="ch-prediction-icon">' + cat.emoji + '</div>' +
-        '<div class="ch-prediction-content">' +
-          '<div class="ch-prediction-area">📍 ' + p.area + '</div>' +
-          '<div class="ch-prediction-text">' + p.prediction + '</div>' +
-          '<div class="ch-prediction-severity ' + p.severity + '">' + p.severity.toUpperCase() + ' RISK</div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
+
+    // Build grid of detailed prediction cards
+    container.innerHTML = '<div class="ch-predictions-grid-detailed">' +
+      predictions.map(function (p) {
+        var cat = cats[p.category] || cats['other'];
+        var riskColor = p.severity === 'high' ? 'var(--accent-coral)' : p.severity === 'medium' ? 'var(--accent-amber)' : 'var(--accent-emerald)';
+        var riskGlow = p.severity === 'high' ? 'rgba(239, 71, 111, 0.15)' : p.severity === 'medium' ? 'rgba(255, 209, 102, 0.15)' : 'rgba(6, 214, 160, 0.15)';
+        
+        return '<div class="ch-prediction-card-detailed" style="--risk-color:' + riskColor + '; --risk-glow:' + riskGlow + '">' +
+          '<div class="ch-prediction-detailed-header">' +
+            '<div class="ch-prediction-detailed-icon">' + cat.emoji + '</div>' +
+            '<div class="ch-prediction-detailed-title-wrap">' +
+              '<div class="ch-prediction-detailed-area">📍 ' + p.area + '</div>' +
+              '<div class="ch-prediction-detailed-text">' + p.prediction + '</div>' +
+            '</div>' +
+            '<span class="ch-prediction-urgency-badge ch-urgency-' + p.severity + '">' + p.severity + '</span>' +
+          '</div>' +
+          
+          '<div class="ch-prediction-confidence-wrapper">' +
+            '<div class="ch-prediction-confidence-text">' +
+              '<span>AI Confidence</span>' +
+              '<strong>' + p.confidence + '%</strong>' +
+            '</div>' +
+            '<div class="ch-prediction-confidence-bar">' +
+              '<div class="ch-prediction-confidence-fill" style="width:' + p.confidence + '%"></div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="ch-prediction-meta-row">' +
+            '<span class="ch-prediction-timeframe">⏱️ ' + p.timeframe + '</span>' +
+          '</div>' +
+
+          '<div class="ch-prediction-mitigation">' +
+            '<strong>⚡ Recommended Mitigation Plan:</strong>' +
+            p.mitigation +
+          '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+  },
+
+  // ==================== REAL-TIME INSIGHTS ORCHESTRATION ====================
+  setupDashboardListener: function () {
+    var self = this;
+    var selector = document.getElementById('ward-selector');
+    if (selector) {
+      selector.addEventListener('change', function () {
+        self.updateDashboard(this.value);
+      });
+    }
+  },
+
+  updateDashboard: function (wardId) {
+    var self = this;
+    var issues = CommunityHero.data.issues;
+    
+    // Find ward name
+    var wardName = "All Wards";
+    if (wardId) {
+      var wardObj = CommunityHero.data.wards.find(function(w){ return w.id === wardId; });
+      if (wardObj) wardName = wardObj.name;
+    }
+
+    // 1. Calculate Real-Time Stats (proportional scaling of historical bases + user reports)
+    var wardBases = {
+      'connaught-place': { total: 47, resolved: 34, avgTime: 3.8 },
+      'karol-bagh':      { total: 38, resolved: 30, avgTime: 4.1 },
+      'saket':           { total: 52, resolved: 35, avgTime: 4.3 },
+      'dwarka':          { total: 55, resolved: 38, avgTime: 4.5 },
+      'vasant-kunj':     { total: 41, resolved: 28, avgTime: 4.2 },
+      'chandni-chowk':   { total: 29, resolved: 21, avgTime: 4.6 },
+      'rajouri-garden':  { total: 33, resolved: 23, avgTime: 4.4 },
+      'greater-kailash': { total: 44, resolved: 32, avgTime: 3.9 },
+      'lajpat-nagar':    { total: 36, resolved: 25, avgTime: 4.2 },
+      'mayur-vihar':     { total: 22, resolved: 15, avgTime: 4.8 }
+    };
+
+    var baseTotal = 0;
+    var baseResolved = 0;
+    var avgTimeSum = 0;
+    var wardsCounted = 0;
+
+    if (wardId) {
+      var base = wardBases[wardId] || { total: 15, resolved: 10, avgTime: 4.5 };
+      var activeInWard = issues.filter(function(i) { return i.location.ward === wardId; });
+      
+      // Count newly reported and resolved issues that aren't in the preset base (e.g. submitted during session)
+      var newReported = activeInWard.filter(function(i) { return parseInt(i.id.split('-')[1]) > 20; }).length;
+      var newResolved = activeInWard.filter(function(i) { return i.status === 'resolved' && parseInt(i.id.split('-')[1]) > 20; }).length;
+
+      baseTotal = base.total + newReported;
+      baseResolved = base.resolved + newResolved;
+      avgTimeSum = base.avgTime;
+      wardsCounted = 1;
+    } else {
+      // Sum all bases
+      for (var k in wardBases) {
+        baseTotal += wardBases[k].total;
+        baseResolved += wardBases[k].resolved;
+        avgTimeSum += wardBases[k].avgTime;
+        wardsCounted++;
+      }
+      var newReported = issues.filter(function(i) { return parseInt(i.id.split('-')[1]) > 20; }).length;
+      var newResolved = issues.filter(function(i) { return i.status === 'resolved' && parseInt(i.id.split('-')[1]) > 20; }).length;
+
+      baseTotal += newReported;
+      baseResolved += newResolved;
+    }
+
+    var resolutionRate = baseTotal > 0 ? Math.round((baseResolved / baseTotal) * 100) : 0;
+    var avgTime = wardsCounted > 0 ? (avgTimeSum / wardsCounted) : 4.2;
+    
+    // Adjust average resolution time based on newly resolved issues (real-time feedback!)
+    var activeIssues = wardId ? issues.filter(function(i){ return i.location.ward === wardId; }) : issues;
+    var sessionResolved = activeIssues.filter(function(i){ return i.status === 'resolved' && parseInt(i.id.split('-')[1]) > 20; });
+    if (sessionResolved.length > 0) {
+      // Shave off some days to show positive impact of user self-repair!
+      avgTime = Math.max(1.5, avgTime - (sessionResolved.length * 0.4));
+    }
+    
+    // Predicted count: count high/medium risk predictions for this ward
+    var predictions = CommunityHero.data.analytics.predictions;
+    var predictedCount = predictions.filter(function(p) {
+      return (!wardId || p.area.toLowerCase() === wardName.toLowerCase()) && p.severity !== 'low';
+    }).length * 3 + 2;
+
+    // 2. Animate Stat Cards in Real-time using existing Count-up helper
+    var elTotal = document.getElementById('dash-stat-total');
+    var elRate = document.getElementById('dash-stat-rate');
+    var elTime = document.getElementById('dash-stat-time');
+    var elPredicted = document.getElementById('dash-stat-predicted');
+
+    if (elTotal) {
+      var startTotal = parseInt(elTotal.textContent) || 0;
+      this._countUp('dash-stat-total', startTotal, baseTotal, 800);
+    }
+    if (elRate) {
+      var startRate = parseInt(elRate.textContent) || 0;
+      this._countUpWithSuffix('dash-stat-rate', startRate, resolutionRate, '%', 800);
+    }
+    if (elTime) {
+      var startTime = parseFloat(elTime.textContent) || 0;
+      this._countUpFloatWithSuffix('dash-stat-time', startTime, avgTime, 'd', 800);
+    }
+    if (elPredicted) {
+      var startPredicted = parseInt(elPredicted.textContent) || 0;
+      this._countUp('dash-stat-predicted', startPredicted, predictedCount, 800);
+    }
+
+    // 3. Update Chart.js Instances in Real-time
+    // Resolution Trend (Line)
+    if (this._charts.resolution) {
+      var resChart = this._charts.resolution;
+      var trend = [
+        Math.max(50, resolutionRate - 10),
+        Math.max(50, resolutionRate - 7),
+        Math.max(50, resolutionRate - 3),
+        Math.max(50, resolutionRate - 5),
+        Math.max(50, resolutionRate - 1),
+        resolutionRate
+      ];
+      resChart.data.datasets[0].data = trend;
+      resChart.update();
+    }
+
+    // Issues by Category (Doughnut)
+    if (this._charts.categories) {
+      var catChart = this._charts.categories;
+      var catCounts = { pothole: 0, 'water-leak': 0, streetlight: 0, waste: 0, 'road-damage': 0, drainage: 0, other: 0 };
+      
+      activeIssues.forEach(function (i) {
+        if (catCounts[i.category] !== undefined) catCounts[i.category]++;
+        else catCounts['other']++;
+      });
+
+      // Add proportional baseline noise to make charts rich
+      var noiseMultiplier = wardId ? 1.2 : 4.5;
+      for (var cat in catCounts) {
+        catCounts[cat] += Math.round((Math.random() * 3 + 1) * noiseMultiplier);
+      }
+
+      catChart.data.datasets[0].data = Object.values(catCounts);
+      catChart.update();
+    }
+
+    // Monthly Reports (Bar)
+    if (this._charts.trend) {
+      var trendChart = this._charts.trend;
+      var scale = baseTotal / 120; // scale relative to all-ward baseline
+      trendChart.data.datasets[0].data = [
+        Math.round(42 * scale) + 2,
+        Math.round(38 * scale) + 1,
+        Math.round(55 * scale) + 3,
+        Math.round(61 * scale) + 4,
+        Math.round(48 * scale) + 2,
+        baseTotal
+      ];
+      trendChart.update();
+    }
+
+    // Ward Comparison (Horizontal Bar with Highlight!)
+    if (this._charts.wardComparison) {
+      var compChart = this._charts.wardComparison;
+      var compLabels = compChart.data.labels;
+      var bgReported = [];
+      var bgResolved = [];
+
+      compLabels.forEach(function (label) {
+        // Match label (e.g., "Connaught Place") with selected wardName
+        var isSelected = wardId && (label.toLowerCase() === wardName.toLowerCase());
+        if (isSelected) {
+          bgReported.push('rgba(239, 71, 111, 1.0)'); // Glowing Solid Coral for reported
+          bgResolved.push('rgba(6, 214, 160, 1.0)');  // Glowing Solid Emerald for resolved
+        } else {
+          bgReported.push(wardId ? 'rgba(239, 71, 111, 0.18)' : 'rgba(239, 71, 111, 0.6)'); // Translucent if other selected
+          bgResolved.push(wardId ? 'rgba(6, 214, 160, 0.18)' : 'rgba(6, 214, 160, 0.6)');
+        }
+      });
+
+      compChart.data.datasets[0].backgroundColor = bgReported;
+      compChart.data.datasets[1].backgroundColor = bgResolved;
+      compChart.update();
+    }
+
+    // 4. Generate AI Ward Health Audit Scorecard
+    this.renderWardHealthAudit(wardId, wardName, baseTotal, resolutionRate, activeIssues);
+  },
+
+  // Helper for float count ups
+  _countUpFloatWithSuffix: function (elementId, start, end, suffix, duration) {
+    var el = document.getElementById(elementId);
+    if (!el) return;
+    var startTime = null;
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var value = (start + (end - start) * eased).toFixed(1);
+      el.textContent = value + (suffix || '');
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  },
+
+  // Helper for suffix count ups
+  _countUpWithSuffix: function (elementId, start, end, suffix, duration) {
+    var el = document.getElementById(elementId);
+    if (!el) return;
+    var startTime = null;
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var value = Math.floor(start + (end - start) * eased);
+      el.textContent = value + (suffix || '');
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  },
+
+  // ==================== AI WARD HEALTH AUDIT SCORECARD ====================
+  renderWardHealthAudit: function (wardId, wardName, totalIssues, resolutionRate, activeIssues) {
+    var container = document.getElementById('dashboard-health-audit');
+    if (!container) return;
+
+    // Count emergencies (severity 5) and critical (severity 4) issues that are active
+    var activeUnresolved = activeIssues.filter(function(i){ return i.status !== 'resolved'; });
+    var emergencies = activeUnresolved.filter(function(i){ return i.severity === 5; }).length;
+    var critical = activeUnresolved.filter(function(i){ return i.severity === 4; }).length;
+
+    // Calculate Grade
+    var grade = 'F';
+    var gradeColor = 'var(--accent-coral)';
+    var gradeGradient = 'linear-gradient(135deg, var(--accent-coral), #dc2626)';
+    var gradeGlow = 'rgba(239, 71, 111, 0.35)';
+    var gradeValText = 'Critical Risk';
+
+    if (resolutionRate >= 85 && emergencies === 0 && critical === 0) {
+      grade = 'A';
+      gradeColor = 'var(--accent-emerald)';
+      gradeGradient = 'linear-gradient(135deg, var(--accent-emerald), #059669)';
+      gradeGlow = 'rgba(6, 214, 160, 0.35)';
+      gradeValText = 'Excellent Health';
+    } else if (resolutionRate >= 72 && emergencies === 0) {
+      grade = 'B';
+      gradeColor = 'var(--accent-teal)';
+      gradeGradient = 'linear-gradient(135deg, var(--accent-teal), #0284c7)';
+      gradeGlow = 'rgba(17, 138, 178, 0.3)';
+      gradeValText = 'Good Standing';
+    } else if (resolutionRate >= 60 && emergencies <= 1) {
+      grade = 'C';
+      gradeColor = 'var(--accent-amber)';
+      gradeGradient = 'linear-gradient(135deg, var(--accent-amber), #d97706)';
+      gradeGlow = 'rgba(255, 209, 102, 0.3)';
+      gradeValText = 'Moderate Health';
+    } else if (resolutionRate >= 45 && emergencies <= 2) {
+      grade = 'D';
+      gradeColor = 'var(--accent-purple)';
+      gradeGradient = 'linear-gradient(135deg, var(--accent-purple), #7c3aed)';
+      gradeGlow = 'rgba(139, 92, 246, 0.3)';
+      gradeValText = 'Needs Attention';
+    }
+
+    // Generate dynamic citizen-friendly bullet summaries
+    var bullet1 = '';
+    var bullet2 = '';
+    var bullet3 = '';
+
+    // Bullet 1: Resolution Rate and fixed issues
+    var resolvedCount = activeIssues.filter(function(i){ return i.status === 'resolved'; }).length;
+    if (grade === 'A' || grade === 'B') {
+      bullet1 = '🟢 <strong>Strong Fix Output</strong>: ' + wardName + ' maintains a high <strong>' + resolutionRate + '% resolution rate</strong>. ' + (resolvedCount > 0 ? resolvedCount + ' key community issues' : 'Civic issues') + ' have been successfully resolved by municipal crews and volunteers this month.';
+    } else {
+      bullet1 = '⚠️ <strong>Resolution Backlog</strong>: The ward\'s resolution rate is at <strong>' + resolutionRate + '%</strong>. Infrastructure repairs are lagging behind incoming citizen reports, causing a slow buildup of unresolved issues.';
+    }
+
+    // Bullet 2: Active Emergencies/Critical issues
+    if (emergencies > 0) {
+      bullet2 = '🚨 <strong>Emergency Alert</strong>: There ' + (emergencies > 1 ? 'are ' + emergencies + ' active emergencies' : 'is 1 active emergency') + ' in the ward (Severity 5). This includes severe sewer overflows or major water mains bursts causing direct disruption to residents. Immediate action required.';
+    } else if (critical > 0) {
+      bullet2 = '⚠️ <strong>Safety Hazards Active</strong>: No emergency, but there ' + (critical > 1 ? 'are ' + critical + ' critical safety hazards' : 'is 1 critical safety hazard') + ' active (Severity 4), such as severe potholes or dark stretches opposite malls. Drive carefully.';
+    } else {
+      bullet2 = '✅ <strong>All Clear</strong>: There are zero active emergency or critical safety hazards reported in the ward at this moment. The local streets are relatively safe and stable.';
+    }
+
+    // Bullet 3: AI Predictive Warning
+    var predictions = CommunityHero.data.analytics.predictions;
+    var wardPrediction = predictions.find(function(p){ 
+      return p.area.toLowerCase() === wardName.toLowerCase() || (!wardId && p.severity === 'high'); 
+    });
+
+    if (wardPrediction) {
+      bullet3 = '🔮 <strong>AI Predictive Alert</strong>: Forensic models predict a <strong>' + (wardPrediction.severity === 'high' ? 'high' : 'medium') + ' risk</strong> of <em>' + wardPrediction.category + '</em> issues (' + wardPrediction.confidence + '% confidence) in the ' + wardPrediction.timeframe + '. <strong>Mitigation</strong>: ' + wardPrediction.mitigation;
+    } else {
+      bullet3 = '🔮 <strong>AI Predictive Alert</strong>: General forecasting predicts stable air quality and low drainage risks for this ward over the next 5 days. Monitor predictions daily.';
+    }
+
+    container.innerHTML = '<div class="ch-health-audit-card ch-fade-in" style="--audit-color:' + gradeColor + '; --audit-gradient:' + gradeGradient + '; --audit-glow:' + gradeGlow + '">' +
+      '<div class="ch-health-grade-container">' +
+        '<span class="ch-health-grade-label">Ward Grade</span>' +
+        '<div class="ch-health-grade-badge">' + grade + '</div>' +
+        '<span class="ch-health-grade-val">' + gradeValText + '</span>' +
+      '</div>' +
+      '<div class="ch-health-audit-content">' +
+        '<h3 class="ch-health-audit-title">' +
+          '🤖 AI Ward Health Audit &mdash; ' + wardName +
+          '<span class="ch-health-audit-title-meta">Real-time Citizen Summary</span>' +
+        '</h3>' +
+        '<ul class="ch-health-audit-list">' +
+          '<li class="ch-health-bullet">' + bullet1 + '</li>' +
+          '<li class="ch-health-bullet">' + bullet2 + '</li>' +
+          '<li class="ch-health-bullet">' + bullet3 + '</li>' +
+        '</ul>' +
+      '</div>' +
+    '</div>';
   },
 
   // ==================== LEADERBOARD ====================

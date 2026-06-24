@@ -33,11 +33,29 @@ CommunityHero.map = {
     // Zoom control top-right
     L.control.zoom({ position: 'topright' }).addTo(this.map);
 
-    // Premium CartoDB Dark Matter tile layer for high-fidelity dark styling
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // 1. Dark Map Layer
+    var darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      maxZoom: 19
-    }).addTo(this.map);
+      maxZoom: 19,
+      className: 'ch-dark-map-tiles'
+    });
+
+    // 2. Satellite Map Layer (Esri World Imagery)
+    var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+      maxZoom: 19,
+      className: 'ch-satellite-map-tiles'
+    });
+
+    // Add dark layer by default
+    darkLayer.addTo(this.map);
+
+    // Layer selection control in bottom-right
+    var baseLayers = {
+      "🌑 Dark City": darkLayer,
+      "🛰️ Satellite": satelliteLayer
+    };
+    L.control.layers(baseLayers, null, { position: 'bottomright' }).addTo(this.map);
 
     this.markerLayer = L.layerGroup().addTo(this.map);
     this.heatLayer = L.layerGroup().addTo(this.map);

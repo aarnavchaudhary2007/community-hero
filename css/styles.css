@@ -409,8 +409,8 @@ button { font-family:inherit; cursor:pointer; }
   padding:8px 14px; border-radius:20px; font-size:0.8rem; font-weight:600;
   white-space:nowrap; color:#fff;
 }
-/* Dark map tiles via CSS filter */
-.leaflet-tile-pane { filter:invert(1) hue-rotate(180deg) brightness(0.7) contrast(1.3); }
+/* Dark map tiles via CSS filter - applied only to dark layer, exempting satellite */
+.ch-dark-map-tiles { filter:invert(1) hue-rotate(180deg) brightness(0.7) contrast(1.3); }
 
 /* ---------- Detail Screen ---------- */
 .ch-detail-header { margin-bottom:16px; }
@@ -919,5 +919,368 @@ body.ch-crisis-active .ch-crisis-banner { display: block !important; }
 .ch-tag-authority:hover {
   background: rgba(139, 92, 246, 0.18);
   transform: translateY(-1px);
+}
+
+/* ============================================================
+   CRISIS NEWS TICKER & MARQUEE ANIMATIONS
+   ============================================================ */
+.ch-crisis-banner-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8px 45px 8px 16px !important; /* Extra padding on right for fixed close button */
+  position: relative;
+  overflow: hidden;
+  height: 38px;
+}
+.ch-crisis-ticker-container {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+.ch-crisis-ticker-track {
+  display: inline-block;
+  white-space: nowrap;
+  animation: ch-ticker-scroll 22s linear infinite;
+  padding-left: 20px;
+}
+.ch-crisis-ticker-track:hover {
+  animation-play-state: paused; /* Hover to pause scrolling so citizens can read easily! */
+  cursor: help;
+}
+@keyframes ch-ticker-scroll {
+  0% { transform: translate3d(100vw, 0, 0); }
+  100% { transform: translate3d(-100%, 0, 0); }
+}
+.ch-crisis-dismiss {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1010; /* Float above everything in the banner */
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.ch-crisis-dismiss:hover {
+  background: rgba(255, 255, 255, 0.4) !important;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+/* ============================================================
+   PREMIUM GLASSMORPHIC MAP LAYER CONTROL
+   ============================================================ */
+.leaflet-control-layers {
+  background: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  color: var(--text-primary) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500;
+  padding: 6px 10px !important;
+  transition: all 0.3s ease;
+}
+.leaflet-control-layers:hover {
+  border-color: var(--accent-emerald) !important;
+  box-shadow: 0 8px 32px rgba(6, 214, 160, 0.15) !important;
+}
+.leaflet-control-layers-toggle {
+  background-size: 20px 20px !important;
+  filter: invert(1) brightness(2); /* Make layers icon white in dark theme */
+  width: 32px !important;
+  height: 32px !important;
+}
+.leaflet-control-layers-list {
+  font-size: 0.78rem;
+  padding: 4px 0;
+}
+.leaflet-control-layers-base label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.2s;
+}
+.leaflet-control-layers-base label:hover {
+  color: var(--accent-emerald);
+}
+.leaflet-control-layers-base input[type="radio"] {
+  accent-color: var(--accent-emerald);
+  cursor: pointer;
+}
+
+/* ============================================================
+   AI WARD HEALTH AUDIT SCORECARD
+   ============================================================ */
+.ch-health-audit-card {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.8), rgba(17, 24, 39, 0.9));
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  align-items: stretch;
+  gap: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.ch-health-audit-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--audit-color, var(--accent-emerald));
+}
+.ch-health-grade-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+  text-align: center;
+  padding-right: 20px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ch-health-grade-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.ch-health-grade-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #fff;
+  background: var(--audit-gradient, linear-gradient(135deg, var(--accent-emerald), #059669));
+  box-shadow: 0 0 20px var(--audit-glow, rgba(6, 214, 160, 0.3));
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+.ch-health-grade-val {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--audit-color, var(--accent-emerald));
+  margin-top: 6px;
+}
+.ch-health-audit-content {
+  flex: 1;
+}
+.ch-health-audit-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ch-health-audit-title-meta {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.ch-health-audit-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ch-health-bullet {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  position: relative;
+  padding-left: 20px;
+}
+.ch-health-bullet::before {
+  content: '•';
+  position: absolute;
+  left: 4px;
+  color: var(--audit-color, var(--accent-emerald));
+  font-weight: 900;
+  font-size: 1.2rem;
+  line-height: 1;
+  top: -1px;
+}
+
+/* ============================================================
+   ENHANCED DETAILED PREDICTIONS
+   ============================================================ */
+.ch-predictions-grid-detailed {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 14px;
+}
+.ch-prediction-card-detailed {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ch-prediction-card-detailed:hover {
+  transform: translateY(-2px);
+  border-color: var(--risk-color, var(--accent-cyan));
+  box-shadow: 0 6px 20px var(--risk-glow, rgba(115, 210, 222, 0.15));
+}
+.ch-prediction-detailed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.ch-prediction-detailed-icon {
+  font-size: 1.5rem;
+  background: rgba(255,255,255,0.03);
+  border-radius: var(--radius-sm);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+.ch-prediction-detailed-title-wrap {
+  flex: 1;
+}
+.ch-prediction-detailed-area {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--risk-color, var(--accent-cyan));
+}
+.ch-prediction-detailed-text {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  margin-top: 3px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+.ch-prediction-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+.ch-prediction-timeframe {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent-amber);
+  font-weight: 600;
+  background: rgba(255, 209, 102, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.ch-prediction-confidence-wrapper {
+  margin: 4px 0;
+}
+.ch-prediction-confidence-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.ch-prediction-confidence-bar {
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ch-prediction-confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--risk-color, var(--accent-cyan)), var(--accent-emerald));
+  border-radius: 2px;
+}
+.ch-prediction-mitigation {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.ch-prediction-mitigation strong {
+  color: var(--accent-emerald);
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+}
+.ch-prediction-urgency-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+.ch-urgency-high { background: rgba(220, 38, 38, 0.2); color: #f87171; }
+.ch-urgency-medium { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.ch-urgency-low { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+
+@media (max-width: 768px) {
+  .ch-predictions-grid-detailed {
+    grid-template-columns: 1fr;
+  }
+  .ch-health-audit-card {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .ch-health-grade-container {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-right: 0;
+    padding-bottom: 16px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 16px;
+    min-width: unset;
+  }
+  .ch-health-grade-container .ch-health-grade-badge {
+    width: 48px;
+    height: 48px;
+    font-size: 1.6rem;
+  }
 }
 
